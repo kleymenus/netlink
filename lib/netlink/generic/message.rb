@@ -18,7 +18,7 @@ module Netlink
       attribute :header_size,    Netlink::Attribute::UInt32,  :type => Netlink::Generic::CTRL_ATTR_HDRSIZE
 
       def initialize(opts={})
-        super(opts)
+        super
         self.nl_header.type      = Netlink::Generic::GENL_ID_CTRL
         self.nl_header.flags     = Netlink::NLM_F_REQUEST | Netlink::NLM_F_ACK
         self.genl_header.version = 1
