@@ -97,5 +97,9 @@ describe Netlink::Message do
       TestMessageParent.headers.should == [:nl_header, :parent_header]
       TestMessageParent.attributes.should == [:parent_attribute]
     end
+
+    it 'should include headers_size from its parent' do
+      TestMessageChild.headers_size.should == TestMessageParent.headers_size + Netlink::NlMsgHdr.new.num_bytes
+    end
   end
 end

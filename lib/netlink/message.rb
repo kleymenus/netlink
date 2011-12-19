@@ -32,11 +32,18 @@ module Netlink
         @headers
       end
 
+      def headers_size
+        @headers_size
+      end
+
+      # Defines a new header field. klass is expected to be a subclass of BinData::Record
       def header(name, klass)
         name = name.to_sym
         raise "#{name} already defined" if method_defined?(name)
 
         self.headers << name
+        @headers_size ||= 0
+        @headers_size += klass.new.num_bytes
 
         # Define getter (autovivifies header)
         define_method(name) do
@@ -96,6 +103,8 @@ module Netlink
       def copy_headers(klass)
         dup_headers = self.headers.dup
         klass.instance_eval { instance_variable_set("@headers", dup_headers) }
+        hsz = @headers_size
+        klass.instance_eval { instance_variable_set("@headers_size", hsz) }
       end
 
       def copy_attributes(klass)
@@ -105,13 +114,11 @@ module Netlink
     end
 
     header :nl_header, Netlink::NlMsgHdr
-    attr_reader :headers_size
     attr_accessor :payload
 
     def initialize(opts={})
       initialize_headers(opts)
       initialize_attributes(opts)
-      @headers_size = self.class.headers.inject(0) {|accum, name| accum + send(name).num_bytes }
       self.payload = opts[:payload] || ''
       yield self if block_given?
       self
@@ -122,7 +129,7 @@ module Netlink
         self.payload = encode_attributes
       end
       padded_payload = Netlink::Util.pad(self.payload)
-      self.nl_header.len = self.headers_size + padded_payload.length
+      self.nl_header.len = self.class.headers_size + padded_payload.length
 
       for header in self.class.headers
         send(header).write(io)
@@ -142,7 +149,7 @@ module Netlink
         send(header).read(io)
       end
 
-      self.payload = Netlink::Util.read_checked(io, self.nl_header.len - self.headers_size)
+      self.payload = Netlink::Util.read_checked(io, self.nl_header.len - self.class.headers_size)
 
       unless self.class.attributes_by_type.empty?
         decode_attributes(self.payload)
