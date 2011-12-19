@@ -117,8 +117,8 @@ module Netlink
     attr_accessor :payload
 
     def initialize(opts={})
-      initialize_headers(opts)
-      initialize_attributes(opts)
+      initialize_fields(self.class.headers, opts)
+      initialize_fields(self.class.attributes_by_type.values.map {|attr_spec| attr_spec.name }, opts)
       self.payload = opts[:payload] || ''
       yield self if block_given?
       self
@@ -158,18 +158,10 @@ module Netlink
 
     private
 
-    def initialize_headers(opts={})
-      for header in self.class.headers
-        if opts.has_key?(header)
-          send("#{header}=".to_sym, opts[header])
-        end
-      end
-    end
-
-    def initialize_attributes(opts={})
-      for attr_spec in self.class.attributes_by_type.values
-        if opts.has_key?(attr_spec.name)
-          send("#{attr_spec.name}=".to_sym, opts[attr_spec.name])
+    def initialize_fields(field_names, opts)
+      for name in field_names
+        if opts.has_key?(name)
+          send("#{name}=".to_sym, opts[name])
         end
       end
     end

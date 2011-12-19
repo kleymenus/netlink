@@ -6,6 +6,20 @@ class TestMessage < Netlink::Message
 end
 
 describe Netlink::Message do
+  describe '#initialize' do
+    class InitializerTestMessage < Netlink::Message
+      attribute :test_attr, Netlink::Attribute::String, :type => 2
+    end
+
+    it 'should allow setting both headers and attributes' do
+      attr = "test"
+      hdr = Netlink::NlMsgHdr.new
+      msg = InitializerTestMessage.new(:nl_header => hdr, :test_attr => attr)
+      msg.nl_header.should == hdr
+      msg.test_attr.should == attr
+    end
+  end
+
   describe '#encode' do
     it 'should pad the message on a 32 bit boundary' do
       msg = Netlink::Message.new
