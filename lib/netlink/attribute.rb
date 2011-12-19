@@ -29,9 +29,12 @@ module Netlink
         Netlink::Util.write_checked(io, padding)
       end
 
-      def read(io, skip_header=false)
-        self.header.read(io) unless skip_header
+      def read(io)
+        self.header.read(io)
+        read_body(io)
+      end
 
+      def read_body(io)
         raw_value = Netlink::Util.read_checked(io, self.header.payload_len)
         self.value = decode_value(raw_value)
 

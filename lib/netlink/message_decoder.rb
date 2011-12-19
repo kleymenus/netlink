@@ -36,11 +36,10 @@ module Netlink
 
     def read(io)
       header = Netlink::NlMsgHdr.read(io)
-      klass = @message_by_type[header.type]
-      klass ||= Netlink::Message
+      klass = @message_by_type[header.type] || Netlink::Message
       ret = klass.new
       ret.nl_header = header
-      ret.read(io, true)
+      ret.read_body(io)
       ret
     end
   end

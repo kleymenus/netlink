@@ -131,9 +131,14 @@ module Netlink
       Netlink::Util.write_checked(io, padded_payload)
     end
 
-    def read(io, skip_nl_header=false)
+    def read(io)
+      self.nl_header.read(io)
+      read_body(io)
+    end
+
+    def read_body(io)
       for header in self.class.headers
-        next if header == :nl_header && skip_nl_header
+        next if header == :nl_header
         send(header).read(io)
       end
 
@@ -182,13 +187,13 @@ module Netlink
           if attr_spec
             attr = attr_spec.klass.new
             attr.header = attr_hdr
-            attr.read(io, true)
+            attr.read_body(io)
             send("#{attr_spec.name}=".to_sym, attr.value)
           else
             # Don't know how to decode; discard attribute. We may be talking
             # to newer code in the kernel.
             attr = Netlink::Attribute::String.new(:header => attr_hdr)
-            attr.read(io, true)
+            attr.read_body(io)
           end
         end
       rescue EOFError
